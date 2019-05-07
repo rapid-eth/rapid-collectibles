@@ -4,3 +4,7 @@ Try it (requires you to have [solc binary (^0.5.0)](https://github.com/ethereum/
 
     npm install
     npm run compile
+
+## deployment
+
+See the [deploy instructions](/deploy)
