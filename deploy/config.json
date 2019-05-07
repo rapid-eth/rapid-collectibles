@@ -1,0 +1,9 @@
+{
+    "certificateTrustAnchorAddress": "0x1eBe940e98E34F10d6a7D217b4A9EDA74f9dB037",
+    "devTipbotAdminAddress": "0xde5C2630Af50dfA149f59Bd469Bd46D7F1403198",
+    "prodTipbotAdminAddress": "0x9C0799509227910f97bbc0FB25AE917f315cAC40",
+    "admins": [
+        "0xfa67dde98346d6033f3da0b157b70fe8434a48ce",
+        "0xF9963dbe9438A5ECb62e5e7c2C081C3d12D48dd5"
+    ]
+}

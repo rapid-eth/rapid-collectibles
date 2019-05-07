@@ -1,0 +1,25 @@
+{
+  "name": "rapid-emblems",
+  "version": "1.0.0",
+  "description": "ERC721 implementation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "./untruffle/compile.sh; node ./untruffle/compile.js"
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ConsenSys/rapid-emblems.git"
+  },
+  "author": "Joe Bernitt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ConsenSys/rapid-emblems/issues"
+  },
+  "homepage": "https://github.com/ConsenSys/rapid-emblems#readme",
+  "dependencies": {
+    "ethers": "^4.0.27",
+    "openzeppelin-solidity": "^2.2.0"
+  }
+}
