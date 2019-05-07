@@ -11,10 +11,11 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
     mapping (bytes32 => EmblemType) emblemTypes;
 
     Counters.Counter private newTokenID;
+
     struct EmblemType {
         address owner;
         Counters.Counter count; //lolz
-        address[] minters;
+        mapping (address => bool) minters;
         string emblemURI;
     }
 
@@ -23,23 +24,25 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
     }
     
     function createNewEmblemType(string memory _emblemURI, address[] memory _minters) 
-    public //TODO permission
+    public //TODO permission?
     returns (bool)
     {
         bytes32 id = getEmblemTypeID(msg.sender, _emblemURI, _minters);
         EmblemType storage e = emblemTypes[id];
 
         e.owner = msg.sender;
-        e.minters = _minters;
         e.emblemURI = _emblemURI;
-
+        for (uint8 i = 0; i < _minters.length; i++) {
+            e.minters[_minters[i]] = true;
+        }
+        emit EmblemTypeCreated(msg.sender, id);
         return true;
     }
 
     function mintEmblem(address to, bytes32 _typeID) public returns (bool)
     {
-        //check minter
         EmblemType storage e = emblemTypes[_typeID];
+        require(e.minters[msg.sender]); //TODO modifier?
         uint256 tokenId = newTokenID.current();
         newTokenID.increment();
         e.count.increment();
@@ -61,14 +64,9 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
 
     /// ROLES
     string public ADMIN_AUTH = "admin";
-    string public TYPE_CREATE_AUTH = "type_creator";
 
     function addAdmin(address account) public onlyAdmin {
         addRoleOwner(account,ADMIN_AUTH);
-    }
-
-    function addTypeCreator(address account) public onlyAdmin {
-        addRoleOwner(account,TYPE_CREATE_AUTH);
     }
 
     modifier onlyAdmin {
