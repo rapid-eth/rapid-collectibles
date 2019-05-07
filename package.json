@@ -5,8 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "compile": "./untruffle/compile.sh; node ./untruffle/compile.js"
-
+    "compile": "./untruffle/compile.sh; node ./untruffle/compile.js",
+    "deploy": "NETWORK=rinkeby node ./deploy/index.js",
+    "dev-deploy": "NETWORK=ganache node ./deploy/index.js",
+    "deploy-verify": "NETWORK=rinkeby node ./deploy/verify.js",
+    "dev-deploy-verify": "NETWORK=ganache node ./deploy/verify.js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +23,12 @@
   "homepage": "https://github.com/ConsenSys/rapid-emblems#readme",
   "dependencies": {
     "ethers": "^4.0.27",
+    "module-alias": "^2.2.0",
     "openzeppelin-solidity": "^2.2.0"
+  },
+  "_moduleAliases": {
+    "@root": ".",
+    "@contracts": "build/contracts",
+    "@deployed": "build/deployed"
   }
 }
