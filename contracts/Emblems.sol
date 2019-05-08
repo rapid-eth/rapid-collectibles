@@ -15,7 +15,7 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
 
     Counters.Counter private newTokenID;
 
-    enum EmblemTypes { Minter, Certificate, Open }
+    enum EmblemMintPermissions { Minter, Certificate, Open }
 
     struct EmblemType {
         address owner;
@@ -28,7 +28,7 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         bytes32 emblemTypeID;
         Counters.Counter count;
         string emblemURI;
-        EmblemTypes eType;
+        EmblemMintPermissions eType;
         mapping (address => bool) minters;
         mapping (address => bool) trustAnchors;
         uint256 createLimit;
@@ -105,10 +105,10 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
     {
         Emblem storage e = emblems[_emblemID];
 
-        if (e.eType == EmblemTypes.Open) {
+        if (e.eType == EmblemMintPermissions.Open) {
             //todo enforce create limit
         }
-        if (e.eType == EmblemTypes.Minter) {
+        if (e.eType == EmblemMintPermissions.Minter) {
             require(e.minters[msg.sender]);
         }
         return _mintEmblem(to,_emblemID);
