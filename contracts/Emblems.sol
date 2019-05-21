@@ -106,7 +106,7 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         e.emblemTypeID = _emblemTypeID;
         e.emblemURI = _emblemURI;
 
-        emit EmblemCreated(msg.sender, id);
+        emit EmblemCreated(msg.sender, _emblemTypeID, id);
         return true;
     }
 
@@ -126,23 +126,25 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
     }
 
 
-    function mintEmblem(address to, bytes32 _emblemID, bytes memory anchorSignature) public 
+    function mintEmblem(address _to, bytes32 _emblemID, bytes memory anchorSignature) public 
     {
         require(isAnchorSigned(_emblemID, anchorSignature));
 
-        _mintEmblem(to,_emblemID);
+        _mintEmblem(_to, _emblemID);
     }
 
 
-    function _mintEmblem(address to, bytes32 _emblemID) internal
+    function _mintEmblem(address _to, bytes32 _emblemID) internal
     {
         Emblem storage e = emblems[_emblemID];
         uint256 tokenId = newTokenID.current();
         newTokenID.increment();
         e.count.increment();
+        e.createdCount[msg.sender].increment();
 
-        _mint(to, tokenId);
+        _mint(_to, tokenId);
         _setTokenURI(tokenId, e.emblemURI);
+        emit EmblemMinted(msg.sender, _to, _emblemID, tokenId);
     }
 
     function getEmblemTypeID(address _owner, string memory _typeURI, address[] memory _delegates) public view returns (bytes32) {
@@ -204,7 +206,7 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
     }
 
     event EmblemTypeCreated(address indexed _owner, bytes32 _emblemTypeID);
-    event EmblemCreated(address indexed _owner, bytes32 _emblemID);
-    event EmblemMinted(address indexed _minter, bytes32 _emblemID, uint256 _tokenID);
+    event EmblemCreated(address indexed _owner, bytes32 _emblemTypeID, bytes32 _emblemID);
+    event EmblemMinted(address indexed _minter, address indexed _to, bytes32 _emblemID, uint256 _tokenID);
 
 }
