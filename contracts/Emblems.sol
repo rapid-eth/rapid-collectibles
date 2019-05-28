@@ -164,11 +164,12 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         return emblemTypes[_emblemTypeID].delegates[_delegate];
     }
 
-    function emblem(bytes32 _emblemID) public view returns (address creator, bytes32 emblemTypeID, string memory uri, uint256 count) {
+    function emblem(bytes32 _emblemID) public view returns (address creator, bytes32 emblemTypeID, string memory uri, uint256 count, EmblemMintPermissions mintPermissionType) {
         creator = emblems[_emblemID].creator;
         emblemTypeID = emblems[_emblemID].emblemTypeID;
         uri = emblems[_emblemID].emblemURI;
         count = emblems[_emblemID].count.current();
+        mintPermissionType = emblems[_emblemID].eType;
     }
 
     function isEmblemMinter(bytes32 _emblemID, address _minter) public view returns (bool) {
