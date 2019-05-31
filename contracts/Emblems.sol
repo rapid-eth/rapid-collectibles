@@ -37,7 +37,7 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         mapping (address => bool) minters;
         mapping (address => bool) trustAnchors;
 
-        mapping (address => Counters.Counter) createdCount;
+        mapping (address => Counters.Counter) nonce;
     }
 
     constructor() ERC721Metadata("Emblem", "MBLM") public {
@@ -110,12 +110,9 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         return true;
     }
 
-    function mintEmblem(address to, bytes32 _emblemID) public 
+    function mintEmblem(address to, bytes32 _emblemID) public
     {
         Emblem storage e = emblems[_emblemID];
-        if (e.eType == EmblemMintPermissions.Open) {
-            require(e.createdCount[msg.sender].current() <= e.createLimit);
-        }
         if (e.eType == EmblemMintPermissions.Minter) {
             require(e.minters[msg.sender]);
         } else {
@@ -126,12 +123,21 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
     }
 
 
-    function mintEmblem(address _to, bytes32 _emblemID, bytes memory anchorSignature) public 
-    {
-        require(isAnchorSigned(_emblemID, anchorSignature));
+    // function mintEmblem(address _to, bytes32 _emblemID, bytes memory anchorSignature) public 
+    // {
+    //     require(isAnchorSigned(_emblemID, anchorSignature));
 
-        _mintEmblem(_to, _emblemID);
+    //     _mintEmblem(_to, _emblemID);
+    // }
+
+    function redeemEmblemCertificate(bytes32 _emblemID, bytes memory anchorSignature) public 
+    {
+
+        require(isCertificateSigned(msg.sender, _emblemID, anchorSignature));
+
+        _mintEmblem(msg.sender, _emblemID);
     }
+
 
 
     function _mintEmblem(address _to, bytes32 _emblemID) internal
@@ -140,7 +146,7 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         uint256 tokenId = newTokenID.current();
         newTokenID.increment();
         e.count.increment();
-        e.createdCount[msg.sender].increment();
+        e.nonce[_to].increment();
 
         _mint(_to, tokenId);
         _setTokenURI(tokenId, e.emblemURI);
@@ -184,6 +190,10 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         return newTokenID.current();
     }
 
+    function getEmblemNonce(bytes32 _emblemID, address _a) public view returns (uint256) {
+        return emblems[_emblemID].nonce[_a].current();
+    }
+
     /// ROLES
     string public ADMIN_AUTH = "admin";
 
@@ -201,8 +211,18 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         return keccak256(abi.encodePacked(_emblemID,address(this),msg.sender));
     }
 
+    function createEmblemCertificateHash(bytes32 _emblemID, address _to) public view returns (bytes32) {
+        uint256 nonce = emblems[_emblemID].nonce[_to].current();
+        return keccak256(abi.encodePacked(_emblemID,address(this), _to, nonce));
+    }
+
     function isAnchorSigned(bytes32 _emblemID, bytes memory signature) private view returns (bool) {
         bytes32 msgHash = createEmblemMessageHash(_emblemID);
+        return emblems[_emblemID].trustAnchors[msgHash.toEthSignedMessageHash().recover(signature)];
+    }
+
+    function isCertificateSigned(address _to, bytes32 _emblemID, bytes memory signature) private view returns (bool) {
+        bytes32 msgHash = createEmblemCertificateHash(_emblemID, _to);
         return emblems[_emblemID].trustAnchors[msgHash.toEthSignedMessageHash().recover(signature)];
     }
 

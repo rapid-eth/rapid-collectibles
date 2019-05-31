@@ -50,6 +50,11 @@ const createBytesMessageSignature = async (bytes, wallet) => {
   return await wallet.signMessage(messageHashBytes);
 };
 
+const signHash = async (hash, wallet) => {
+  let messageHashBytes = ethers.utils.arrayify(hash);
+  return await wallet.signMessage(messageHashBytes);
+};
+
 const callContract = async (contract, wallet, funcName, contractParams) => {
   try {
     let contractWithSigner = contract.connect(wallet);
@@ -204,5 +209,6 @@ module.exports = {
   readDeployedFile,
   getDeployedContract,
   networkID,
-  secrets
+  secrets,
+  signHash
 };

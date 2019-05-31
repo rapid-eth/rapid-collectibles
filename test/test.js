@@ -128,7 +128,10 @@ describe("Create New emblem type and emblem", async function () {
         assert.equal(emblem.uri, dummyEmblemURI)
 
         //create cert for account4
-        let certSig = await utils.createCertificateSignature(eID, global.contracts.Emblem.address, account4.signingKey.address, trustAnchor)
+        //let certSig = await utils.createCertificateSignature(eID, global.contracts.Emblem.address, account4.signingKey.address, trustAnchor)
+        let emblemCerthash = await global.contracts.Emblem.createEmblemCertificateHash(eID, account4.signingKey.address)
+        console.log("EMBLEM CERT HASH: " + emblemCerthash)
+        let certSig = await utils.signHash(emblemCerthash, trustAnchor)
 
         console.log(certSig, "certSig")
 
@@ -137,9 +140,9 @@ describe("Create New emblem type and emblem", async function () {
         let ntIDInt = parseInt(nextTokenID.toString())
         console.log(ntIDInt, 'ntIDInt')
 
+        //console.log(global.contracts.Emblem)
 
-
-        await utils.callContractParams(global.contracts.Emblem, account4, 'mintEmblem',[account4.signingKey.address, eID, certSig], {gasLimit: 6000000})
+        await utils.callContractParams(global.contracts.Emblem, account4, 'redeemEmblemCertificate',[eID, certSig], {gasLimit: 6000000})
 
         
         let tokenURI = await  global.contracts.Emblem.tokenURI(ntIDInt)
