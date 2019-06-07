@@ -7,6 +7,7 @@
     "test": "./test/test.sh",
     "compile": "./untruffle/compile.sh; node ./untruffle/compile.js",
     "deploy": "NETWORK=rinkeby node ./deploy/index.js",
+    "verify": "NETWORK=rinkeby node ./deploy/verify.js",
     "dev-deploy": "NETWORK=ganache node ./deploy/index.js",
     "deploy-verify": "NETWORK=rinkeby node ./deploy/verify.js",
     "dev-deploy-verify": "NETWORK=ganache node ./deploy/verify.js"

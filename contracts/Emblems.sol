@@ -83,16 +83,6 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         return _createNewEmblem(_emblemTypeID, _emblemURI);
     }
 
-    function createOpenEmblem(bytes32 _emblemTypeID, string memory _emblemURI, uint256 _limit) public returns (bool) {
-        require(emblemTypes[_emblemTypeID].delegates[msg.sender]);
-
-        bytes32 id = getEmblemID(msg.sender, _emblemTypeID, _emblemURI);
-        Emblem storage e = emblems[id];
-        e.createLimit = _limit;
-        e.eType = EmblemMintPermissions.Open;
-        return _createNewEmblem(_emblemTypeID, _emblemURI);
-    }
-
     function _createNewEmblem(bytes32 _emblemTypeID, string memory _emblemURI)
     internal
     returns (bool)
@@ -122,23 +112,22 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         _mintEmblem(to,_emblemID);
     }
 
+    function addEmblemTypeDelegate(bytes32 _emblemTypeID, address _delegate) public {
+        require(emblemTypes[_emblemTypeID].delegates[msg.sender]);
+        emblemTypes[_emblemTypeID].delegates[_delegate] = true;
+    }
 
-    // function mintEmblem(address _to, bytes32 _emblemID, bytes memory anchorSignature) public 
-    // {
-    //     require(isAnchorSigned(_emblemID, anchorSignature));
+    function addEmblemTrustAnchor(bytes32 _emblemID, address _anchor) public {
+        require(emblems[_emblemID].creator == msg.sender);
+        emblems[_emblemID].trustAnchors[_anchor] = true;
+    }
 
-    //     _mintEmblem(_to, _emblemID);
-    // }
-
-    function redeemEmblemCertificate(bytes32 _emblemID, bytes memory anchorSignature) public 
+    function redeemEmblemCertificate(bytes32 _emblemID, bytes memory anchorSignature) public
     {
-
         require(isCertificateSigned(msg.sender, _emblemID, anchorSignature));
 
         _mintEmblem(msg.sender, _emblemID);
     }
-
-
 
     function _mintEmblem(address _to, bytes32 _emblemID) internal
     {
@@ -170,7 +159,14 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         return emblemTypes[_emblemTypeID].delegates[_delegate];
     }
 
-    function emblem(bytes32 _emblemID) public view returns (address creator, bytes32 emblemTypeID, string memory uri, uint256 count, EmblemMintPermissions mintPermissionType) {
+    function emblem(bytes32 _emblemID)
+        public view returns (
+            address creator,
+            bytes32 emblemTypeID,
+            string memory uri,
+            uint256 count,
+            EmblemMintPermissions mintPermissionType)
+    {
         creator = emblems[_emblemID].creator;
         emblemTypeID = emblems[_emblemID].emblemTypeID;
         uri = emblems[_emblemID].emblemURI;

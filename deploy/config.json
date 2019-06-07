@@ -1,7 +1,8 @@
 {
     "certificateTrustAnchorAddress": "0x1eBe940e98E34F10d6a7D217b4A9EDA74f9dB037",
     "admins": [
-        "0xfa67dde98346d6033f3da0b157b70fe8434a48ce",
-        "0xF9963dbe9438A5ECb62e5e7c2C081C3d12D48dd5"
+        "0x696365B6A5445F647065454DA0544f1AAC73ad1f",
+        "0xF9963dbe9438A5ECb62e5e7c2C081C3d12D48dd5",
+        "0x068a1a9B6dA95E03b6a2716FdEEe0854117300a3"
     ]
 }

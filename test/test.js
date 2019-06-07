@@ -138,18 +138,37 @@ describe("Create New emblem type and emblem", async function () {
         let nextTokenID = await global.contracts.Emblem.getNextTokenID()
 
         let ntIDInt = parseInt(nextTokenID.toString())
-        console.log(ntIDInt, 'ntIDInt')
+        console.log(ntIDInt, 'next token ID:')
 
         //console.log(global.contracts.Emblem)
 
         await utils.callContractParams(global.contracts.Emblem, account4, 'redeemEmblemCertificate',[eID, certSig], {gasLimit: 6000000})
 
-        
         let tokenURI = await  global.contracts.Emblem.tokenURI(ntIDInt)
         let tokenOwner = await  global.contracts.Emblem.ownerOf(ntIDInt)
 
         assert.equal(tokenURI,dummyEmblemURI)
         assert.equal(tokenOwner,account4.signingKey.address)
+
+
+
+
+        let emblemCerthash2 = await global.contracts.Emblem.createEmblemCertificateHash(eID, account4.signingKey.address)
+        console.log("EMBLEM CERT HASH: " + emblemCerthash2)
+        let certSig2 = await utils.signHash(emblemCerthash2, trustAnchor)
+        let nextTokenID2 = await global.contracts.Emblem.getNextTokenID()
+
+        let ntIDInt2 = parseInt(nextTokenID2.toString())
+        console.log(ntIDInt2, 'ntIDInt aga2')
+
+        await utils.callContractParams(global.contracts.Emblem, account4, 'redeemEmblemCertificate',[eID, certSig2], {gasLimit: 6000000})
+
+        let tokenURI2 = await  global.contracts.Emblem.tokenURI(ntIDInt2)
+        let tokenOwner2 = await  global.contracts.Emblem.ownerOf(ntIDInt2)
+        assert.equal(tokenURI2,dummyEmblemURI)
+        assert.equal(tokenOwner2,account4.signingKey.address)
+
+
 
     });
 
