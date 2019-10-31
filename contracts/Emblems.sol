@@ -18,7 +18,6 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
 
     Counters.Counter private newTokenID;
 
-    enum EmblemMintPermissions { Minter, Certificate, Open }
 
     struct EmblemType {
         address owner;
@@ -31,11 +30,9 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         bytes32 emblemTypeID;
         Counters.Counter count;
         string emblemURI;
-        EmblemMintPermissions eType;
         uint256 createLimit;
 
-        mapping (address => bool) minters;
-        mapping (address => bool) trustAnchors;
+        mapping (address => bool) managers; //can mint these emblems AND sign certificates
 
         mapping (address => Counters.Counter) nonce;
     }
@@ -57,57 +54,28 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         emit EmblemTypeCreated(msg.sender, id);
     }
 
-    function createMinterEmblem(bytes32 _emblemTypeID, string memory _emblemURI, address[] memory _minters) public returns (bool) {
+    function createEmblem(bytes32 _emblemTypeID, string memory _emblemURI, address[] memory _managers) public returns (bool) {
         //only let emblemType owners create a new emblem
         require(emblemTypes[_emblemTypeID].delegates[msg.sender]);
-
         bytes32 id = getEmblemID(msg.sender, _emblemTypeID, _emblemURI);
         Emblem storage e = emblems[id];
-        for (uint8 i = 0; i < _minters.length; i++) {
-            e.minters[_minters[i]] = true;
-        }
-        e.eType = EmblemMintPermissions.Minter;
-        return _createNewEmblem(_emblemTypeID, _emblemURI);
-    }
 
-    function createCertificateEmblem(bytes32 _emblemTypeID, string memory _emblemURI, address[] memory _trustAnchors) public returns (bool) {
-        //only let emblemType owners create a new emblem
-        require(emblemTypes[_emblemTypeID].delegates[msg.sender]);
-
-        bytes32 id = getEmblemID(msg.sender, _emblemTypeID, _emblemURI);
-        Emblem storage e = emblems[id];
-        for (uint8 i = 0; i < _trustAnchors.length; i++) {
-            e.trustAnchors[_trustAnchors[i]] = true;
-        }
-        e.eType = EmblemMintPermissions.Certificate;
-        return _createNewEmblem(_emblemTypeID, _emblemURI);
-    }
-
-    function _createNewEmblem(bytes32 _emblemTypeID, string memory _emblemURI)
-    internal
-    returns (bool)
-    {
-        //only let emblemType owners create a new emblem
-        require(emblemTypes[_emblemTypeID].delegates[msg.sender]);
-
-        bytes32 id = getEmblemID(msg.sender, _emblemTypeID, _emblemURI);
-        Emblem storage e = emblems[id];
         e.creator = msg.sender;
         e.emblemTypeID = _emblemTypeID;
         e.emblemURI = _emblemURI;
 
+        for (uint8 i = 0; i < _managers.length; i++) {
+            e.managers[_managers[i]] = true;
+        }
+        
         emit EmblemCreated(msg.sender, _emblemTypeID, id);
+
         return true;
     }
 
     function mintEmblem(address to, bytes32 _emblemID) public
     {
-        Emblem storage e = emblems[_emblemID];
-        if (e.eType == EmblemMintPermissions.Minter) {
-            require(e.minters[msg.sender]);
-        } else {
-            revert();
-        }
+        require(emblems[_emblemID].managers[msg.sender]);
 
         _mintEmblem(to,_emblemID);
     }
@@ -117,9 +85,9 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         emblemTypes[_emblemTypeID].delegates[_delegate] = true;
     }
 
-    function addEmblemTrustAnchor(bytes32 _emblemID, address _anchor) public {
+    function addEmblemManager(bytes32 _emblemID, address _m) public {
         require(emblems[_emblemID].creator == msg.sender);
-        emblems[_emblemID].trustAnchors[_anchor] = true;
+        emblems[_emblemID].managers[_m] = true;
     }
 
     function redeemEmblemCertificate(bytes32 _emblemID, bytes memory anchorSignature) public
@@ -164,22 +132,16 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
             address creator,
             bytes32 emblemTypeID,
             string memory uri,
-            uint256 count,
-            EmblemMintPermissions mintPermissionType)
+            uint256 count)
     {
         creator = emblems[_emblemID].creator;
         emblemTypeID = emblems[_emblemID].emblemTypeID;
         uri = emblems[_emblemID].emblemURI;
         count = emblems[_emblemID].count.current();
-        mintPermissionType = emblems[_emblemID].eType;
     }
 
-    function isEmblemMinter(bytes32 _emblemID, address _minter) public view returns (bool) {
-        return emblems[_emblemID].minters[_minter];
-    }
-
-    function isEmblemTrustAnchor(bytes32 _emblemID, address _anchor) public view returns (bool) {
-        return emblems[_emblemID].trustAnchors[_anchor];
+    function isEmblemManager(bytes32 _emblemID, address _minter) public view returns (bool) {
+        return emblems[_emblemID].managers[_minter];
     }
 
     function getNextTokenID() public view returns (uint256) {
@@ -192,16 +154,23 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
 
     /// ROLES
     string public ADMIN_AUTH = "admin";
+    bytes32 public ADMIN_AUTH_ROLE_HASH = 0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8;
 
     function addAdmin(address account) public onlyAdmin {
         addRoleOwner(account,ADMIN_AUTH);
     }
 
+    function temp() public view returns (bytes32) {
+        return keccak256(abi.encodePacked(ADMIN_AUTH));
+    }
+
     modifier onlyAdmin {
-        bytes32 roleHash = keccak256(abi.encodePacked(ADMIN_AUTH));
-        require(roleOwners[msg.sender].roles[roleHash]);
+        //bytes32 roleHash = keccak256(abi.encodePacked(ADMIN_AUTH));
+        require(roleOwners[msg.sender].roles[ADMIN_AUTH_ROLE_HASH]);
         _;
     }
+
+
 
     function createEmblemMessageHash(bytes32 _emblemID) private view returns (bytes32) {
         return keccak256(abi.encodePacked(_emblemID,address(this),msg.sender));
@@ -214,12 +183,12 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
 
     function isAnchorSigned(bytes32 _emblemID, bytes memory signature) private view returns (bool) {
         bytes32 msgHash = createEmblemMessageHash(_emblemID);
-        return emblems[_emblemID].trustAnchors[msgHash.toEthSignedMessageHash().recover(signature)];
+        return emblems[_emblemID].managers[msgHash.toEthSignedMessageHash().recover(signature)];
     }
 
     function isCertificateSigned(address _to, bytes32 _emblemID, bytes memory signature) private view returns (bool) {
         bytes32 msgHash = createEmblemCertificateHash(_emblemID, _to);
-        return emblems[_emblemID].trustAnchors[msgHash.toEthSignedMessageHash().recover(signature)];
+        return emblems[_emblemID].managers[msgHash.toEthSignedMessageHash().recover(signature)];
     }
 
     event EmblemTypeCreated(address indexed _owner, bytes32 _emblemTypeID);

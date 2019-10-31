@@ -1,4 +1,6 @@
-const utils = require("./utils");
+require('module-alias/register')
+
+const utils = require("@utils");
 const config = require("./config.json");
 
 const certificateTrustAnchorAddress = config.certificateTrustAnchorAddress;

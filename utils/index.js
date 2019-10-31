@@ -1,36 +1,32 @@
-require('module-alias/register')
 const ethers = require("ethers");
 const fs = require("fs");
+const IPFS = require('ipfs-http-client')
+const ipfs = new IPFS('ipfs.infura.io', '5001', { protocol: 'https' })
 
 let url = "http://127.0.0.1:7545";
-let provider;//= new ethers.providers.JsonRpcProvider(url);
+let provider;
 let networkID
-//let provider = ethers.getDefaultProvider('rinkeby');
-
-if (process.env.NETWORK === "rinkeby") {
-  provider = ethers.getDefaultProvider('rinkeby');
+let networkName
+if (process.env.NETWORK === "mainnet") {
+  //provider = ethers.getDefaultProvider('rinkeby');
+  let infuraURL = 'https://mainnet.infura.io/v3/3bbfc77a4c3b4c8abf44928522104e9a'
+  provider = new ethers.providers.JsonRpcProvider(infuraURL);
+  networkID = "1";
+  networkName = 'mainnet'
+} else if (process.env.NETWORK === "rinkeby") {
+  //provider = ethers.getDefaultProvider('rinkeby');
+  let infuraURL = 'https://rinkeby.infura.io/v3/9dd73bc075d441f684db7bc34f4e5950'
+  provider = new ethers.providers.JsonRpcProvider(infuraURL);
   networkID = "4";
+  networkName = 'rinkeby'
 } else {
   provider = new ethers.providers.JsonRpcProvider(url);
   networkID = "5777";
+  networkName = 'ganache'
 }
-//const Web3 = require('web3');
-//const web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7545")); // mac os path
 
 let secrets = require('@root/secrets.json')
 let mnemonic = secrets.mnemonic;
-
-// if (fs.existsSync("./secrets.json")) {
-//   let secrets = JSON.parse(fs.readFileSync("./secrets.json", "utf8"));
-//   mnemonic = secrets.mnemonic;
-// } else {
-//   console.log(
-//     "No secrets.json found. If you are trying to publish EPM " +
-//     "this will fail. Otherwise, you can ignore this message!"
-//   );
-//   mnemonic =
-//     "";
-// }
 
 const ethersAccount = i => {
   let path = "m/44'/60'/0'/0/" + i;
@@ -53,15 +49,16 @@ const createBytesMessageSignature = async (bytes, wallet) => {
 const signHash = async (hash, wallet) => {
   let messageHashBytes = ethers.utils.arrayify(hash);
   return await wallet.signMessage(messageHashBytes);
-};
+}
 
 const callContract = async (contract, wallet, funcName, contractParams) => {
   try {
     let contractWithSigner = contract.connect(wallet);
-    let response = await contractWithSigner.functions[funcName](
-      ...contractParams, {gasLimit:6000000}
+    let tx = await contractWithSigner.functions[funcName](
+      ...contractParams, { gasLimit: 6000000 }
     );
-    return response;
+    await tx.wait();
+    return tx;
   } catch (err) {
     console.log("***ERROR CALLING CONTRACT***");
     console.log(err);
@@ -73,12 +70,12 @@ const readContractFile = (name) => {
   return contract
 }
 const readDeployedFile = (name) => {
-  let contract = require(`@cdeployed/${name}.json`)
+  let contract = require(`@deployed/${networkName}/${name}.json`)
   return contract
 }
 const getDeployedContract = (name) => {
-  let contract = require(`@deployed/${name}.json`)
-  return getContract(contract.networks[networkID].address,contract.abi)
+  let contract = require(`@deployed/${networkName}/${name}.json`)
+  return getContract(contract.networks[networkID].address, contract.abi)
 }
 
 const callContractParams = async (contract, wallet, funcName, contractParams, txParams) => {
@@ -158,6 +155,17 @@ const bnToInt = (bn) => {
 const emptyAddress = '0x0000000000000000000000000000000000000000'
 
 const deployContractAndWriteToFile = async (contractName, deployerWallet, params) => {
+  //check if output dir exists, if not create it
+  const outputDirRoot = `./build/deployed`;
+  if (!fs.existsSync(outputDirRoot)) {
+    fs.mkdirSync(outputDirRoot);
+  }
+
+  const outputDir = `${outputDirRoot}/${networkName}`
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+  }
+
   let contract = require(`@contracts/${contractName}.json`)
 
   //console.log(contract)
@@ -170,27 +178,43 @@ const deployContractAndWriteToFile = async (contractName, deployerWallet, params
   );
   let networks = {}
   networks[networkID] = {
-      address: deployedContract.address,
-      transactionHash: deployedContract.deployTransaction.hash,
+    address: deployedContract.address,
+    transactionHash: deployedContract.deployTransaction.hash,
   }
 
   let truffleLike = {
-      contractName,
-      abi: contract.abi,
-      bytecode: contract.bytecode,
-      networks
+    contractName,
+    abi: contract.abi,
+    bytecode: contract.bytecode,
+    networks
   }
-  writeToFile(`./build/deployed/${contractName}.json`, truffleLike)
+  writeToFile(`${outputDir}/${contractName}.json`, truffleLike)
 
   return deployedContract
 }
 
 
+const ipfsAddImage = async (imageFile) => {
+  let content = fs.readFileSync(imageFile);
+  let imageBuffer = Buffer.from(content) //todo file to buffer
+  let upload = await ipfs.add(Buffer.from(imageBuffer))
+  return upload[0].hash
+};
+
+const ipfsAddJSON = async (jsonObject) => {
+  const content = Buffer.from(JSON.stringify(jsonObject))
+  let imageBuffer = Buffer.from(content) //todo file to buffer
+  let upload = await ipfs.add(Buffer.from(imageBuffer))
+  return upload[0].hash
+};
 
 module.exports = {
+  ipfsAddJSON,
+  ipfsAddImage,
   ethersAccount,
   createStringMessageSignature,
   createBytesMessageSignature,
+  signHash,
   callContract,
   readFile,
   sleep,
@@ -210,5 +234,6 @@ module.exports = {
   getDeployedContract,
   networkID,
   secrets,
-  signHash
+  parseUnits: ethers.utils.parseUnits
+
 };
