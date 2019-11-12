@@ -1,6 +1,6 @@
-# Deploying Emblem Contracts
+# Deploying Contracts
 
-To run a local deployment (ganache) of the emblem contract you must have a file named `secrets.json` in the root folder with the following:
+To run a local deployment (ganache) of the Collections contract you must have a file named `secrets.json` in the root folder with the following:
 
 
     {
