@@ -1,5 +1,7 @@
+require('module-alias/register')
+
+const utils = require("@utils");
 const assert = require("assert");
-const utils = require("./utils");
 
 let global = {};
 global.contracts = {};

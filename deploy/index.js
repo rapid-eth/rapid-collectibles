@@ -1,4 +1,6 @@
-const utils = require("./utils");
+require('module-alias/register')
+
+const utils = require("@utils");
 const config = require("./config.json");
 
 const certificateTrustAnchorAddress = config.certificateTrustAnchorAddress;
@@ -19,6 +21,7 @@ const main = async () => {
 }
 
 const addAdmins = async () => {
+
     for (let i = 0; i < admins.length; i++) {
         const adminAddr = admins[i];
         console.log('granting admin auths to address ' + adminAddr)

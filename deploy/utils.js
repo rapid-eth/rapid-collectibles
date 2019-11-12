@@ -163,6 +163,9 @@ const deployContractAndWriteToFile = async (contractName, deployerWallet, params
     deployerWallet,
     params
   );
+
+  await deployedContract.deployTransaction.wait()
+
   let networks = {}
   networks[networkID] = {
       address: deployedContract.address,

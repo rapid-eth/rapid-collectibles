@@ -4,7 +4,6 @@ const ethers = require('ethers')
 
 let dir = path.join(__dirname, 'compiled')
 let buildDir = './build/contracts'
-console.log(dir)
 
 const main = () => {
     console.log("Adding signatures...")
