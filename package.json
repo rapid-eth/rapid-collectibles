@@ -1,5 +1,5 @@
 {
-  "name": "rapid-emblems",
+  "name": "eth-collectibles",
   "version": "1.0.0",
   "description": "ERC721 implementation",
   "main": "index.js",
