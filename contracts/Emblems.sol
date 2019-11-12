@@ -3,10 +3,9 @@ pragma solidity ^0.5.0;
 import 'openzeppelin-solidity/contracts/token/ERC721/ERC721Metadata.sol';
 import 'openzeppelin-solidity/contracts/drafts/Counters.sol';
 
-import './libs/access/TrustAnchorRoles.sol';
 import "./libs/cryptography/ECDSA.sol";
 
-contract Emblems is ERC721Metadata, TrustAnchorRoles {
+contract Emblems is ERC721Metadata {
 
     using ECDSA for bytes32;
 
@@ -34,7 +33,6 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
     }
 
     constructor() ERC721Metadata("Emblem", "MBLM") public {
-        addRoleOwner(msg.sender,ADMIN_AUTH);
     }
 
     function createEmblemType(string memory _emblemTypeURI, address[] memory _delegates) public {
@@ -147,22 +145,6 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
     function getEmblemNonce(bytes32 _emblemID, address _a) public view returns (uint256) {
         return emblems[_emblemID].nonce[_a].current();
     }
-
-    /// ROLES
-    string public ADMIN_AUTH = "admin";
-    bytes32 public ADMIN_AUTH_ROLE_HASH = 0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8;
-
-    function addAdmin(address account) public onlyAdmin {
-        addRoleOwner(account,ADMIN_AUTH);
-    }
-
-    modifier onlyAdmin {
-        //bytes32 roleHash = keccak256(abi.encodePacked(ADMIN_AUTH));
-        require(roleOwners[msg.sender].roles[ADMIN_AUTH_ROLE_HASH], "not admin");
-        _;
-    }
-
-
 
     function createEmblemMessageHash(bytes32 _emblemID) private view returns (bytes32) {
         return keccak256(abi.encodePacked(_emblemID,address(this),msg.sender));
