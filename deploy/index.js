@@ -21,9 +21,6 @@ const main = async () => {
 }
 
 const addAdmins = async () => {
-    console.log("admin auth hex:")
-    let x = await contracts.Emblems.temp();
-    console.log(x)
 
     for (let i = 0; i < admins.length; i++) {
         const adminAddr = admins[i];

@@ -6,18 +6,14 @@ import 'openzeppelin-solidity/contracts/drafts/Counters.sol';
 import './libs/access/TrustAnchorRoles.sol';
 import "./libs/cryptography/ECDSA.sol";
 
-
 contract Emblems is ERC721Metadata, TrustAnchorRoles {
 
     using ECDSA for bytes32;
-
-    //TODO JSON SPEC
 
     mapping (bytes32 => EmblemType) emblemTypes;
     mapping (bytes32 => Emblem) emblems;
 
     Counters.Counter private newTokenID;
-
 
     struct EmblemType {
         address owner;
@@ -56,7 +52,7 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
 
     function createEmblem(bytes32 _emblemTypeID, string memory _emblemURI, address[] memory _managers) public returns (bool) {
         //only let emblemType owners create a new emblem
-        require(emblemTypes[_emblemTypeID].delegates[msg.sender]);
+        require(emblemTypes[_emblemTypeID].delegates[msg.sender], "not a delegate");
         bytes32 id = getEmblemID(msg.sender, _emblemTypeID, _emblemURI);
         Emblem storage e = emblems[id];
 
@@ -75,24 +71,24 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
 
     function mintEmblem(address to, bytes32 _emblemID) public
     {
-        require(emblems[_emblemID].managers[msg.sender]);
+        require(emblems[_emblemID].managers[msg.sender], "not manager");
 
         _mintEmblem(to,_emblemID);
     }
 
     function addEmblemTypeDelegate(bytes32 _emblemTypeID, address _delegate) public {
-        require(emblemTypes[_emblemTypeID].delegates[msg.sender]);
+        require(emblemTypes[_emblemTypeID].delegates[msg.sender], "not a delegate");
         emblemTypes[_emblemTypeID].delegates[_delegate] = true;
     }
 
     function addEmblemManager(bytes32 _emblemID, address _m) public {
-        require(emblems[_emblemID].creator == msg.sender);
+        require(emblems[_emblemID].creator == msg.sender, "not creator");
         emblems[_emblemID].managers[_m] = true;
     }
 
     function redeemEmblemCertificate(bytes32 _emblemID, bytes memory anchorSignature) public
     {
-        require(isCertificateSigned(msg.sender, _emblemID, anchorSignature));
+        require(isCertificateSigned(msg.sender, _emblemID, anchorSignature), "invalid cert signature");
 
         _mintEmblem(msg.sender, _emblemID);
     }
@@ -160,13 +156,9 @@ contract Emblems is ERC721Metadata, TrustAnchorRoles {
         addRoleOwner(account,ADMIN_AUTH);
     }
 
-    function temp() public view returns (bytes32) {
-        return keccak256(abi.encodePacked(ADMIN_AUTH));
-    }
-
     modifier onlyAdmin {
         //bytes32 roleHash = keccak256(abi.encodePacked(ADMIN_AUTH));
-        require(roleOwners[msg.sender].roles[ADMIN_AUTH_ROLE_HASH]);
+        require(roleOwners[msg.sender].roles[ADMIN_AUTH_ROLE_HASH], "not admin");
         _;
     }
 
